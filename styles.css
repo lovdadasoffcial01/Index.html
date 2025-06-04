@@ -1,0 +1,126 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: #f4f4f4;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.chat-header {
+  background: #128c7e;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.chat-container {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background: #ece5dd;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-container {
+  display: flex;
+  padding: 10px;
+  background: #f0f0f0;
+  border-top: 1px solid #ccc;
+}
+textarea {
+  flex: 1;
+  border: 1px solid #ccc;
+  border-radius: 15px;
+  padding: 10px;
+  font-size: 16px;
+  resize: none;
+  overflow: hidden;
+  max-height: 150px;
+}
+button {
+  background: #128c7e;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 15px;
+  margin-left: 10px;
+  font-size: 16px;
+  cursor: pointer;
+}
+button:hover {
+  background: #075e54;
+}
+
+.message {
+  max-width: 70%;
+  margin: 8px 0;
+  padding: 12px;
+  border-radius: 18px;
+  font-size: 14px;
+  position: relative;
+  line-height: 1.5;
+}
+.message.user {
+  align-self: flex-end;
+  background: #dcf8c6;
+  border-bottom-right-radius: 4px;
+}
+.message.ai {
+  align-self: flex-start;
+  background: white;
+  border-bottom-left-radius: 4px;
+}
+.timestamp {
+  display: block;
+  font-size: 10px;
+  color: #888;
+  margin-top: 6px;
+}
+
+/* Code Block */
+pre {
+  background-color: #2d2d2d;
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  position: relative;
+  font-size: 13px;
+}
+.copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 12px;
+  padding: 3px 6px;
+  background: #128c7e;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.copy-btn:hover {
+  background: #0a6d5d;
+}
+
+mjx-container {
+  max-width: 100%;
+  overflow-x: auto;
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .chat-container {
+    padding: 40px;
+  }
+  .message {
+    font-size: 15px;
+  }
+}
