@@ -1,97 +1,78 @@
-const chatContainer = document.getElementById('chatContainer');
-const userInput = document.getElementById('userInput');
-const sendBtn = document.getElementById('sendBtn');
-
-function addMessage(content, sender, isHTML = false) {
-  const msgDiv = document.createElement('div');
-  msgDiv.classList.add('message', sender);
-  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const safe = isHTML ? content : content.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
-  msgDiv.innerHTML = `${safe}<div class="timestamp">${time}</div>`;
-  chatContainer.appendChild(msgDiv);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
-  if (window.MathJax) MathJax.typeset();
-  setTimeout(() => hljs.highlightAll(), 0);
-  return msgDiv;
+function toggleDropdown() {
+  const dropdown = document.getElementById('dropdown');
+  dropdown.style.display = dropdown.style.display === 'flex' ? 'none' : 'flex';
 }
 
-function insertCodeCopyButtons(text) {
-  const regex = /```(\w*)\n([\s\S]*?)```/g;
-  return text.replace(regex, (_, lang, code) => {
-    const escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const encoded = encodeURIComponent(code.trim());
-    return `
-      <pre><code class="language-${lang}">${escaped}</code>
-        <button class="copy-btn" onclick="copyCode(this, decodeURIComponent('${encoded}'))">Copy</button>
-      </pre>
-    `;
-  });
+function appendMessage(role, content, isSpinner = false) {
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = `message ${role.toLowerCase()}`;
+  div.innerHTML = isSpinner ? '<div class="spinner"></div>' : formatResponse(content);
+  chat.appendChild(div);
+  MathJax.typeset();
+  addCopyButtons();
+  chat.scrollTop = chat.scrollHeight;
 }
 
-function copyCode(btn, code) {
-  navigator.clipboard.writeText(code).then(() => {
-    btn.textContent = 'Copied!';
-    setTimeout(() => btn.textContent = 'Copy', 2000);
-  });
-}
+async function sendPrompt() {
+  const promptInput = document.getElementById('prompt');
+  const prompt = promptInput.value.trim();
+  if (!prompt) return;
 
-async function getAIResponse(prompt) {
+  appendMessage("User", prompt);
+  promptInput.value = "";
+  appendMessage("AI", "", true);
+
   try {
-    const res = await fetch('https://ai.api-url-production.workers.dev/api/ai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'qwen',
-        prompt,
-        format: 'json',
-        max_tokens: 8000,
-        temperature: 0.7
-      }),
+    const res = await fetch("https://ai.api-url-production.workers.dev/api/ai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "qwen", prompt, max_tokens: 8000, temperature: 0.6 })
     });
-    const text = await res.text();
-    const data = JSON.parse(text);
-    return data.success && data.response ? data.response.trim() : "Sorry, I couldn't process that.";
-  } catch (e) {
-    return `Error: ${e.message}`;
+
+    const data = await res.json();
+    const aiMessages = document.querySelectorAll('.ai');
+    aiMessages[aiMessages.length - 1].innerHTML = formatResponse(data.response);
+    MathJax.typeset();
+    addCopyButtons();
+  } catch (err) {
+    alert("Error getting response from API.");
   }
 }
 
-async function sendMessage() {
-  const message = userInput.value.trim();
-  if (!message) return;
-
-  addMessage(message, 'user');
-  userInput.value = '';
-  userInput.style.height = "auto";
-  userInput.disabled = true;
-  sendBtn.disabled = true;
-
-  const loading = addMessage('Typing...', 'ai');
-  const response = await getAIResponse(message);
-  const formatted = insertCodeCopyButtons(response).replace(/\n/g, "<br>");
-  loading.innerHTML = `${formatted}<div class="timestamp">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>`;
-
-  userInput.disabled = false;
-  sendBtn.disabled = false;
-  userInput.focus();
-
-  if (window.MathJax) MathJax.typeset();
-  hljs.highlightAll();
+function formatResponse(text) {
+  text = text
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => `<pre><button class='copy-btn'>Copy</button><code class="${lang}">${code.trim()}</code></pre>`)
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+    .replace(/\n/g, "<br>");
+  return text;
 }
 
-sendBtn.addEventListener('click', sendMessage);
+function addCopyButtons() {
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.onclick = () => {
+      const code = btn.nextElementSibling.innerText;
+      navigator.clipboard.writeText(code);
+      btn.innerText = "Copied!";
+      setTimeout(() => btn.innerText = "Copy", 1500);
+    };
+  });
+}
 
-userInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
+function clearChat() {
+  document.getElementById('chat').innerHTML = "";
+}
+
+function toggleDarkMode() {
+  const isDark = document.body.classList.toggle('dark');
+  localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+}
+
+(function initDarkMode() {
+  if (localStorage.getItem('darkMode') === 'enabled') {
+    document.body.classList.add('dark');
   }
-  autoResize(userInput);
-});
-
-function autoResize(textarea) {
-  textarea.style.height = "auto";
-  textarea.style.height = textarea.scrollHeight + "px";
-}
-
-window.copyCode = copyCode;
+})();
